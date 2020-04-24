@@ -1,0 +1,37 @@
+---
+title: "DCI_data"
+author: "Chase Souder"
+date: "4/16/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(rvest)
+library(dplyr)
+library(readxl)
+library(readr)
+library(V8)
+```
+
+```{r finals, echo = FALSE}
+
+finals <- read_xlsx("DCIFinals2010s.xlsx") # %>%
+ # mutate(year = as_factor(year))
+
+
+view(finals)
+
+basic_graph <- ggplot(finals, aes(x = year, y = score, color = corps)) +
+  geom_point() +
+  geom_line() +
+  theme_classic()
+
+
+basic_graph
+
+```
+
+
+
