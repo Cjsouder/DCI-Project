@@ -1,0 +1,12 @@
+name: DCI-app-1
+title: DCI-app-1
+username:
+account: cjsouder
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2175826
+bundleId: 3057430
+url: https://cjsouder.shinyapps.io/DCI-app-1/
+when: 1587688855.51232
+asMultiple: FALSE
+asStatic: FALSE
