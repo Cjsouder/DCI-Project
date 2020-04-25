@@ -1,0 +1,91 @@
+---
+title: "Calculating Modernization"
+author: "Chase Souder"
+date: "4/25/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(rvest)
+library(readxl)
+library(readr)
+```
+
+
+```{r}
+
+blue_devils <- read_excel("./Corps/BlueDevils.xlsx")
+bluecoats <- read_excel("./Corps/Bluecoats.xlsx")
+
+
+```
+
+
+```{r}
+
+bd_modern <- blue_devils %>%
+  mutate(corps = "Blue Devils") %>%
+  select(-starts_with("piece_")) %>%
+  mutate(date_1 = as.numeric(date_1)) %>%
+  pivot_longer(cols = starts_with("date_"),
+               names_to = "test",
+               values_to = "date") %>%
+  filter(! is.na(date)) %>%
+  group_by(year) %>%
+  mutate(avg_date = mean(date)) %>%
+  mutate(diff = (year - avg_date)) %>%
+  select(year, place, score, show, corps, avg_date, diff) %>%
+  distinct() %>%
+  mutate(avg_date = round(avg_date, digits = 0)) %>%
+  mutate(diff = round(diff, digits = 0))
+
+write.csv(bd_modern, "bluedevils.csv")
+
+ggplot(data = bd_modern, aes(x = year, y = diff)) +
+  geom_point() +
+  geom_smooth()
+
+
+lm(data = bd_modern, score ~ diff + avg_date)
+
+```
+
+
+
+```{r}
+bloo_modern <- bluecoats %>%
+  mutate(corps = "Bluecoats") %>%
+  select(-starts_with("piece_")) %>%
+  mutate(date_1 = as.numeric(date_1)) %>%
+  pivot_longer(cols = starts_with("date_"),
+               names_to = "test",
+               values_to = "date") %>%
+  filter(! is.na(date)) %>%
+  group_by(year) %>%
+  mutate(avg_date = mean(date)) %>%
+  mutate(diff = (year - avg_date)) %>%
+  select(year, place, score, show, corps, avg_date, diff) %>%
+  distinct()
+
+write.csv(bloo_modern, "bluecoats.csv")
+
+ggplot(data = data_input(), aes(x = year, y = diff)) +
+  geom_point() +
+  geom_smooth(se = FALSE) +
+  theme_classic() +
+  scale_x_continuous(n.breaks = 10) +
+  labs(title = paste("Modernity of Song Selections", input$corps)
+       x = "Year",
+       y = "Difference Between 
+      Average Song Release Date and Current Year")
+            
+  
+
+
+lm(data = bloo_modern, place ~ diff + avg_date)
+```
+
+
+
