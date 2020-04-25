@@ -14,7 +14,9 @@ library(readr)
 ```
 
 
-```{r}
+```{r excel, echo = FALSE}
+
+# Reading in excel sheets with data on song selections of each show
 
 blue_devils <- read_excel("./Corps/BlueDevils.xlsx")
 bluecoats <- read_excel("./Corps/Bluecoats.xlsx")
@@ -23,30 +25,75 @@ bluecoats <- read_excel("./Corps/Bluecoats.xlsx")
 ```
 
 
-```{r}
+```{r Devils Data, echo = FALSE}
+
+# Creating a new table, bd_modern, which will be useful for calculating regression
+# and creating graphs in shiny.
 
 bd_modern <- blue_devils %>%
+  
+# added corps column to remove any potential confusion, since "Blue Devils" was 
+# otherwise not found in table. Will be helpful for any joining of tables later.
+  
   mutate(corps = "Blue Devils") %>%
+  
+# Removed song titles, since this is unnecessary for our purposes and makes our 
+# calculations overly difficult.
+    
   select(-starts_with("piece_")) %>%
+  
+# For whatever reason, only date_1 was rendered as a character, so converting it 
+# to the required type here.
+    
   mutate(date_1 = as.numeric(date_1)) %>%
+
+# Currently a very wide, untidy table, and with "piece_" gone, we can pivot
+# easily. 
+
   pivot_longer(cols = starts_with("date_"),
                names_to = "test",
                values_to = "date") %>%
+
+# Remove observations which were NA as a limitation of Excel.
+  
   filter(! is.na(date)) %>%
+  
+# Grouping by year to ensure that calculations are done only within each show, 
+# not for the whole decade's worth of shows.
+  
   group_by(year) %>%
+  
+# Calculate average release year of all songs in a show  
+  
   mutate(avg_date = mean(date)) %>%
+  
+# Calculate difference between average release year and show year, or how modern
+# the musical selections are.
+  
   mutate(diff = (year - avg_date)) %>%
+  
+# Removing extraneous columns
+  
   select(year, place, score, show, corps, avg_date, diff) %>%
+  
+# Currently, there is still an observation for each song, even though we only 
+# need an observation per year. Distinct() retains only one of an observation 
+# if there are identical obsevations, so this fixes the problem.  
+
   distinct() %>%
+  
+# Finally, changing avg_date and diff to whole numbers, because looking at years
+# with decimals is not needed. In my view, this makes interpretation easier.
+    
   mutate(avg_date = round(avg_date, digits = 0)) %>%
   mutate(diff = round(diff, digits = 0))
 
+# Save this new table as a csv for shiny.
+
 write.csv(bd_modern, "bluedevils.csv")
 
-ggplot(data = bd_modern, aes(x = year, y = diff)) +
-  geom_point() +
-  geom_smooth()
-
+# Investigation into correlation between score and diff or avg_date - both are
+# slightly negative, which surprised me.
 
 lm(data = bd_modern, score ~ diff + avg_date)
 
@@ -54,7 +101,11 @@ lm(data = bd_modern, score ~ diff + avg_date)
 
 
 
-```{r}
+```{r Bloo Data, echo = FALSE}
+
+# Repeating all of the steps taken in Devils Data chunk, but replaced with
+# Bluecoats data.
+
 bloo_modern <- bluecoats %>%
   mutate(corps = "Bluecoats") %>%
   select(-starts_with("piece_")) %>%
@@ -71,18 +122,23 @@ bloo_modern <- bluecoats %>%
 
 write.csv(bloo_modern, "bluecoats.csv")
 
-ggplot(data = data_input(), aes(x = year, y = diff)) +
+
+
+
+# Testing out a ggplot model which will likely be used in shinyd.
+
+ggplot(data = bloo_modern, aes(x = year, y = diff)) +
   geom_point() +
   geom_smooth(se = FALSE) +
   theme_classic() +
   scale_x_continuous(n.breaks = 10) +
-  labs(title = paste("Modernity of Song Selections", input$corps)
+  labs(title = "Modernity of Song Selections",
        x = "Year",
        y = "Difference Between 
-      Average Song Release Date and Current Year")
+       Average Song Release Date and Current Year")
             
-  
-
+# Ran a regression measuring relationship between place and modernity (both in 
+# terms of diff and avg_date), and once again both relationships are negative.
 
 lm(data = bloo_modern, place ~ diff + avg_date)
 ```
