@@ -14,6 +14,8 @@ library(png)
 devils <- read.csv("bluedevils.csv")
 coats <- read.csv("bluecoats.csv")
 
+# Create a list of corps names, for use in a dropdown menu.
+
 corps_names <- c("Blue Devils", "Bluecoats")
 
 
@@ -23,28 +25,33 @@ ui <- navbarPage(
     
     title = "Modernization of Drum Corps International",
     
-    # Apply a premade Shiny theme to the app
+    # Apply a premade Shiny theme to the app, using cerulean to roughly match
+    # DCI logo color.
     
     theme = shinytheme("cerulean"),
     
-    # Add first element to the navbar and code the page to which it links. This
-    # page, "Conference Plot", is coded to contain a dropdown selector and radio
-    # buttons beside a main plot. The plot reacts when hovered over.
-    
-    tabPanel(title = "About",
-             fluidRow(column(
-               12, wellPanel(htmlOutput("about"))
-             ))),
-    
+   
+    # Create first tab of the shiny app, graphing the modernization of musical
+    # selections. This tab allows a user to input which corps they want to view,
+    # and then outputs an interactive plot which will show details about each
+    # data point when it is hovered over.
+  
     tabPanel(
-        title = "Corps Plot",
-        titlePanel("Plotted Correlations"),
+        title = "Musical Modernization",
+        titlePanel("Are musical selections becoming more modern?"),
         br(),
         sidebarPanel(
             selectInput("corps", "Corps", corps_names)
         ),
         mainPanel(plotOutput("plot", hover = hoverOpts(id = "plot_hover")), uiOutput("hover_info"))
-    )
+    ),
+    
+    # Creates the about tab, which outputs only text and one image.
+    
+    tabPanel(title = "About",
+             fluidRow(column(
+               12, wellPanel(htmlOutput("about"))
+             )))
     
 )
 
@@ -62,7 +69,10 @@ server <- function(input, output) {
     )
     })
     
-# Plots a scatter plot with a linear regression  
+    # Plots a scatter plot with a linear regression. Geom_smooth used with lm to
+    # demonstrate trend over time clearly to viewers. Scaled so each year is
+    # shown on x-axis, and includes changing title to reflect corps data being
+    # presented.
     
     output$plot <- renderPlot(    
         ggplot(data = data_input(), aes(x = year, y = diff)) +
@@ -72,11 +82,13 @@ server <- function(input, output) {
                         se = FALSE) +
             theme_classic() +
             scale_x_continuous(n.breaks = 10) +
-            labs(title = paste("Modernity of Song Selections", input$corps),
+            labs(title = paste("Modernity of Song Selections:", input$corps),
                  x = "Year",
                  y = "Difference Between 
       Average Song Release Date and Current Year")
     )
+    
+    # Creates the ability to interact with the graph via hover.
     
     output$hover_info <- renderUI({
         
@@ -103,13 +115,16 @@ server <- function(input, output) {
         top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
         
         # Specify the styling and position of the panel that will appear when a
-        # user hovers over a datapoint
+        # user hovers over a datapoint. This currently has issues due to position
+        # of display being proportional to point location, which will need to be
+        # addressed in an update.
         
         style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
                         "left:", left_px - 200, "px; top:", top_px - 200, "px;")
         
         # Code what information to show on the the panel that will appear when a
-        # user hovers over a datapoint
+        # user hovers over a datapoint. Shows name of corps, show title, result,
+        # and score on finals night.
         
         wellPanel(
             style = style,
@@ -120,7 +135,9 @@ server <- function(input, output) {
         )
     })
    
-    
+    # Creates the output necessary for the about tab, this is a relatively
+    # straightforward method of displaying the text required.
+     
      output$about <- renderUI({
       HTML(
         paste(
@@ -129,24 +146,20 @@ server <- function(input, output) {
           div(img(src = "dcilogo.jpg", height = 250, width = 250, align = "center")),
           br(),
           div(
-            "Info about why I started project"
+            "Drum Corps International is a marching music organization which has operated since 1972, putting young musicians in the position to perform high quality shows for audiences all across the country. Like all long standing organizations, however, many fans take note of the changes over time, both taking positive and negative views of these changes. The debate over the merits of 'modernization' led me to question just how much the acitivty is changing - and in what ways is it changing?"
           ),
           br(),
           div(
-            "Information about methods and analysis"
+            "I first set out to analyze whether musical selections were changing - were shows utilizing more relatively modern pieces, or were they remaining static? To analyze this, I calculated the difference between the release date for songs in a show's repertoire and the year of the show, analyzing whether the gap was growing or changing over time - both for the activity as a whole and each individual corps. I further ran regressions to investigate the effects of 'musical modernization' on score and placement, hoping to uncover whether or not there was an incentive to do so."
           ),
           br(),
-          h4("Modeling Decisions"),
+          h4("Project Decisions and Limitations"),
           div(
-            "There are two variables of interest in this model: percent change in football wins and percent change in college applications. Looking at percent change is more insightful than looking at raw changes in wins and applications. For example, it is a greater change to go from winning two games to four in a twelve-game season than it is to go from winning seven games to nine, and fans probably prefer large improvements to small ones. It is possible that the number of games won is more important than the change in the percentage won - perhaps when a college suddenly wins enough games to enter the AP list of top 25 programs or become eligible to play in a bowl game it causes a spike in applications - but that is an assumption for a different model."
-          ),
-          br(),
-          div(
-            "Results are shown in a scatterplot since this type of graph allows the values of both variables to be displayed for many different data points. To plot each data point the change in applications for each year is matched with the change in football wins that occurred in the previous year. For example, a datapoint representing the change in applications between 2010 and 2011 will be matched with football data representing the change in wins from 2009 to 2010. The reasoning for modeling the data in this manner is that applicants apply before seeing the end of the current season and therefore rely on data from the previous season. Because both application and football seasons begin at roughly the end of August it is possible that applicants are influenced by more recent data when they make application decisions, but it is assumed that this is not the case. "
+            "Firstly, it is important to address the most important limitation - the years of analysis. Due to the methods used in constructing data sets which could be used, the years under consideration were limited to the 2010's. A second limitation were the corps under consideration, which consist of only those corps which made it to World Class Finals at least one year in the decade - with the exclusion of the Glassmen, who ceased operations in 2014."
           ),
           br(),
           div(
-            "A density plot of R-squared values is shown to provide context for how unusual each college's observed R-squared value may be. The plot uses 1000 bootstrapped samples taken from eleven years of observed data for each college. A necessary assumption is that eleven data points are not too few to bootstrap."
+            "The results of the investigation have been displayed in the form of scatter plots with best-fit lines, as seeing each individual show is critical, but the most important element is the change over time (or the change in relation to another variable)."
           ),
           br(), 
           h4("External Links"),
