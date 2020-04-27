@@ -19,10 +19,17 @@ all <- read.csv("all_corps.csv")
 
 corps_names <- c("All","Blue Devils", "Bluecoats")
 
+# Create a list of variables, for the radio buttons in the second tab.
+
 y_vars <- c("Score", "Place")
+
+# This is an attempt to fix a problem with shiny not recognizing columns as 
+# objects - it was partially successful.
 
 score <- all$score
 place <- all$place
+
+# Set UI display
 
 ui <- navbarPage(
     
@@ -51,7 +58,10 @@ ui <- navbarPage(
         mainPanel(plotOutput("plot", hover = hoverOpts(id = "plot_hover")), uiOutput("hover_info"))
     ),
     
-    # Creating a nother graping
+  # Creating another graphing tab, to analyze the relationship between 
+  # modernization and performance. Very similar UI to the previous tab, but now
+  # has radio buttons to change the y - variable being graphed (this doesn't)
+  # work yet but it's sure going to eventually.
     
     tabPanel(
       title = "Incentives for Modernization?",
@@ -64,6 +74,9 @@ ui <- navbarPage(
       mainPanel(plotOutput("stat_plot")
       )
     ),
+  
+  # Another tab to detail conclusions drawn from the data, this displays a simple
+  # text output.
     
   tabPanel(title = "Conclusions",
            fluidRow(column(
@@ -95,6 +108,7 @@ server <- function(input, output) {
                "All" = all)
       })
 
+# Sets behavior for the radio buttons in the second tab
     
     y_input <- reactive({
         switch(input$yvar,
@@ -141,7 +155,8 @@ server <- function(input, output) {
   #  )
   #  )
     
-    # Creates the ability to interact with the graph via hover.
+    # Creates the ability to interact with the graph via hover. This method 'works'
+    # but has flaws - as detailed later.
     
     output$hover_info <- renderUI({
         
@@ -188,7 +203,8 @@ server <- function(input, output) {
         )
     })
     
-   
+  # Sets the title and text for the Conclusions tab. Fairly straightforward. 
+      
     output$conclusion <- renderUI({
       HTML(
         paste(
@@ -217,15 +233,15 @@ server <- function(input, output) {
     })
     
    
-    # Creates the output necessary for the about tab, this is a relatively
-    # straightforward method of displaying the text required.
+    # Almost identical formatting to the conclusions tab, but slightly more complex
+    # in that it contains an image and more headers. 
      
      output$about <- renderUI({
       HTML(
         paste(
           h2("About This Project"),
           br(),
-          div(img(src = "dcilogo.jpg", height = 250, width = 250, align = "center")),
+          div(img(src = "dcilogo.jpg", height = 250, width = 250)),
           br(),
           div(
             "Drum Corps International is a marching music organization which has operated since 1972, putting young musicians in the position to perform high quality shows for audiences all across the country. Like all long standing organizations, however, many fans take note of the changes over time, both taking positive and negative views of these changes. The debate over the merits of 'modernization' led me to question just how much the acitivty is changing - and in what ways is it changing?"
