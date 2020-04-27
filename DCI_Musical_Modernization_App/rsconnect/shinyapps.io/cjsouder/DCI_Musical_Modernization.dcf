@@ -1,0 +1,12 @@
+name: DCI_Musical_Modernization
+title: DCI_Musical_Modernization
+username:
+account: cjsouder
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2190741
+bundleId: 3070338
+url: https://cjsouder.shinyapps.io/DCI_Musical_Modernization/
+when: 1587969080.99911
+asMultiple: FALSE
+asStatic: FALSE
