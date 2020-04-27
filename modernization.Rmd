@@ -143,5 +143,11 @@ ggplot(data = bloo_modern, aes(x = year, y = diff)) +
 lm(data = bloo_modern, place ~ diff + avg_date)
 ```
 
+```{r join all, echo = FALSE}
+# Creating a table to combine all the corps repertoire data, as an option
+# in the shiny app.
 
+all <- full_join(bloo_modern, bd_modern)
 
+write.csv(all, file = "all_corps.csv")
+```
