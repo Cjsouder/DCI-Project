@@ -13,11 +13,16 @@ library(png)
 
 devils <- read.csv("bluedevils.csv")
 coats <- read.csv("bluecoats.csv")
+all <- read.csv("all_corps.csv")
 
 # Create a list of corps names, for use in a dropdown menu.
 
-corps_names <- c("Blue Devils", "Bluecoats")
+corps_names <- c("All","Blue Devils", "Bluecoats")
 
+y_vars <- c("Score", "Place")
+
+score <- all$score
+place <- all$place
 
 ui <- navbarPage(
     
@@ -46,13 +51,34 @@ ui <- navbarPage(
         mainPanel(plotOutput("plot", hover = hoverOpts(id = "plot_hover")), uiOutput("hover_info"))
     ),
     
-    # Creates the about tab, which outputs only text and one image.
+    # Creating a nother graping
+    
+    tabPanel(
+      title = "Incentives for Modernization?",
+      titlePanel("Are modern musical selections linked to higher scores or placements?"),
+      br(),
+      sidebarPanel(
+        selectInput("corps", "Corps", corps_names),
+        radioButtons("yvar", "Y Variable", y_vars)
+                     ),
+      mainPanel(plotOutput("stat_plot")
+      )
+    ),
+    
+  tabPanel(title = "Conclusions",
+           fluidRow(column(
+             12, wellPanel(htmlOutput("conclusion"))
+           ))),
+  
+  
+  # Creates the about tab, which outputs only text and one image.
     
     tabPanel(title = "About",
              fluidRow(column(
                12, wellPanel(htmlOutput("about"))
              )))
     
+  
 )
 
 
@@ -62,13 +88,21 @@ server <- function(input, output) {
     
 # Creates dropdown menu to select which corps you want to view.
     
-    data_input <- reactive({switch(input$corps,
-                                   "Blue Devils" = devils, 
-                                   "Bluecoats" = coats
-                                  
-    )
-    })
+    data_input <- reactive({
+        switch(input$corps,
+               "Blue Devils" = devils, 
+               "Bluecoats" = coats,
+               "All" = all)
+      })
+
     
+    y_input <- reactive({
+        switch(input$yvar,
+              "Score" = score,
+              "Place" = place)
+    })
+
+  
     # Plots a scatter plot with a linear regression. Geom_smooth used with lm to
     # demonstrate trend over time clearly to viewers. Scaled so each year is
     # shown on x-axis, and includes changing title to reflect corps data being
@@ -76,7 +110,7 @@ server <- function(input, output) {
     
     output$plot <- renderPlot(    
         ggplot(data = data_input(), aes(x = year, y = diff)) +
-            geom_point() +
+            geom_point(aes(color = corps)) +
             geom_smooth(method = lm,
                         formula = y ~ x,
                         se = FALSE) +
@@ -85,8 +119,27 @@ server <- function(input, output) {
             labs(title = paste("Modernity of Song Selections:", input$corps),
                  x = "Year",
                  y = "Difference Between 
-      Average Song Release Date and Current Year")
+      Average Song Release Date and Current Year",
+                 color = "Corps")
     )
+    
+    # Creating another plot output, for the Impact on Placement and Score tab.
+    # Currently non-functional - issue with alternating y-variables and I'm 
+    # too stubborn to do it any other way.
+    
+  #  output$stat_plot <- renderPlot(    
+  #    ggplot(data = data_input(), aes(x = diff, y = input$yvar) +
+  #      geom_point(aes(color = corps)) +
+  #      geom_smooth(method = lm,
+  #                  formula = y ~ x,
+  #                  se = FALSE) +
+  #      theme_classic() +
+  #      labs(title = paste("Relationship Between Modernization and score/placement:", input$corps),
+  #           x = "Difference Between 
+  #    Average Song Release Date and Current Year",
+  #           y = paste(input$yvar))
+  #  )
+  #  )
     
     # Creates the ability to interact with the graph via hover.
     
@@ -134,6 +187,35 @@ server <- function(input, output) {
                           "<b> Score: </b>", point$score)))
         )
     })
+    
+   
+    output$conclusion <- renderUI({
+      HTML(
+        paste(
+          h2("Conclusions"),
+          br(),
+          div(
+            "At this stage, it is too early to make firm conclusions. However, early results are hinting at three major points."
+          ),
+          br(),
+          div(
+            "Firstly, there appears to be vast differences in modernization of musical selections among corps. The Blue Devils and Bluecoats, for example, demonstrated nearly opposite trends in their musical modernization. While individual corps may be modernizing musically, the effects on the activity at large will seemingly be more subtle."
+          ),
+          br(),
+          div(
+            "Secondly, there is seemingly a miniscule negative correlation between modernization and performance. This coefficient is small enough to be largely negative, and when I compute more data it may change, but it is surprising that this negative correlation exists, as I hypothesized the opposite would be true. My assumption is that this is a function of a few outliers - for example, the Bluecoats 2019 show, which used exclusively Beatles music and scored very highly, placing second."
+          ),
+          br(),
+          div(
+            "Thirdly, and most clearly, this was not an accurate way to quantify modernization of drum corps. While it does provide interesting data analysis, anyone who has watched drum corps over the past decade will scoff at any analysis which indicates that the Bluecoats are becoming far LESS modern. Arguably since 2014, and certainly since 2016, the Bluecoats have pioneered new methods and styles, truly revolutionizing the activity with their 2016 program, 'Downside Up'. Additionally, a fair amount of skew occurs in the Blue Devils data as a result of the original compositions they use. These are technically released the very same year as the show, but they may be in the style of much older, more traditional drum corps music."
+          ),
+          br(),
+          div(
+          "It is my hope that as I continue to incorporate more data into this shiny app, more conclusive results will appear. However, in future iterations of this project, I will also look to incorporate new methods of quantifying modernization of the drum corps activity.")
+          )
+        )
+    })
+    
    
     # Creates the output necessary for the about tab, this is a relatively
     # straightforward method of displaying the text required.
@@ -173,7 +255,7 @@ server <- function(input, output) {
             a("here.", href = "https://github.com/Cjsouder/DCI-Project")
           ),
           br(),
-          h4("About the Author"),
+          h4("About Me"),
           p(
             "Chase Souder is currently a first-year at Harvard College, planning on concentrating in government."
           ),
