@@ -20,7 +20,8 @@ library(readr)
 
 blue_devils <- read_excel("./Corps/BlueDevils.xlsx")
 bluecoats <- read_excel("./Corps/Bluecoats.xlsx")
-
+phantom_regiment <- read_excel("./Corps/PhantomRegiment.xlsx")
+blue_knights <- read_excel("./Corps/BlueKnights.xlsx")
 
 ```
 
@@ -143,11 +144,57 @@ ggplot(data = bloo_modern, aes(x = year, y = diff)) +
 lm(data = bloo_modern, place ~ diff + avg_date)
 ```
 
+```{r Phantom Data, echo = FALSE}
+# Steps repeated for Phantom regiment
+
+phantom_modern <- phantom_regiment %>%
+  mutate(corps = "Phantom Regiment") %>%
+  select(-starts_with("piece_")) %>%
+  mutate(date_1 = as.numeric(date_1)) %>%
+  pivot_longer(cols = starts_with("date_"),
+               names_to = "test",
+               values_to = "date") %>%
+  filter(! is.na(date)) %>%
+  group_by(year) %>%
+  mutate(avg_date = mean(date)) %>%
+  mutate(diff = (year - avg_date)) %>%
+  select(year, place, score, show, corps, avg_date, diff) %>%
+  distinct()
+
+write.csv(phantom_modern, "phantom.csv")
+
+```
+
+```{r Knights Data, echo = FALSE}
+knights_modern <- blue_knights %>%
+  mutate(corps = "Blue Knights") %>%
+  select(-starts_with("piece_")) %>%
+  mutate(date_1 = as.numeric(date_1)) %>%
+  pivot_longer(cols = starts_with("date_"),
+               names_to = "test",
+               values_to = "date") %>%
+  filter(! is.na(date)) %>%
+  group_by(year) %>%
+  mutate(avg_date = mean(date)) %>%
+  mutate(diff = (year - avg_date)) %>%
+  select(year, place, score, show, corps, avg_date, diff) %>%
+  distinct()
+
+write.csv(knights_modern, "knights.csv")
+```
+
+
 ```{r join all, echo = FALSE}
 # Creating a table to combine all the corps repertoire data, as an option
-# in the shiny app.
+# in the shiny app. Shown in steps as new corps data is added into the repo.
 
 all <- full_join(bloo_modern, bd_modern)
+
+
+all <- full_join(all, phantom_modern)
+
+all <- full_join(all, knights_modern)
+
 
 write.csv(all, file = "all_corps.csv")
 ```
