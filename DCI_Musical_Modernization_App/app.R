@@ -13,11 +13,13 @@ library(png)
 
 devils <- read.csv("bluedevils.csv")
 coats <- read.csv("bluecoats.csv")
+phantom <- read.csv("phantom.csv")
+knights <- read.csv("knights.csv")
 all <- read.csv("all_corps.csv")
 
 # Create a list of corps names, for use in a dropdown menu.
 
-corps_names <- c("All","Blue Devils", "Bluecoats")
+corps_names <- c("All","Blue Devils", "Bluecoats", "Phantom Regiment", "Blue Knights")
 
 # Create a list of variables, for the radio buttons in the second tab.
 
@@ -105,6 +107,8 @@ server <- function(input, output) {
         switch(input$corps,
                "Blue Devils" = devils, 
                "Bluecoats" = coats,
+               "Phantom Regiment" = phantom,
+               "Blue Knights" = knights,
                "All" = all)
       })
 
