@@ -15,21 +15,12 @@ devils <- read.csv("bluedevils.csv")
 coats <- read.csv("bluecoats.csv")
 phantom <- read.csv("phantom.csv")
 knights <- read.csv("knights.csv")
+crown <- read.csv("crown.csv")
 all <- read.csv("all_corps.csv")
 
 # Create a list of corps names, for use in a dropdown menu.
 
-corps_names <- c("All","Blue Devils", "Bluecoats", "Phantom Regiment", "Blue Knights")
-
-# Create a list of variables, for the radio buttons in the second tab.
-
-y_vars <- c("Score", "Place")
-
-# This is an attempt to fix a problem with shiny not recognizing columns as 
-# objects - it was partially successful.
-
-score <- all$score
-place <- all$place
+corps_names <- c("All","Blue Devils", "Bluecoats", "Phantom Regiment", "Blue Knights", "Carolina Crown")
 
 # Set UI display
 
@@ -67,12 +58,10 @@ ui <- navbarPage(
     
     tabPanel(
       title = "Incentives for Modernization?",
-      titlePanel("Are modern musical selections linked to higher scores or placements?"),
+      titlePanel("Are modern musical selections linked to higher placements?"),
       br(),
       sidebarPanel(
-        selectInput("corps", "Corps", corps_names),
-        radioButtons("yvar", "Y Variable", y_vars)
-                     ),
+        selectInput("corp", "Corps", corps_names)),
       mainPanel(plotOutput("stat_plot")
       )
     ),
@@ -109,17 +98,39 @@ server <- function(input, output) {
                "Bluecoats" = coats,
                "Phantom Regiment" = phantom,
                "Blue Knights" = knights,
+               "Carolina Crown" = crown,
                "All" = all)
       })
 
-# Sets behavior for the radio buttons in the second tab
-    
-    y_input <- reactive({
-        switch(input$yvar,
-              "Score" = score,
-              "Place" = place)
+    corps_input <- reactive({
+      switch(input$corp,
+             "Blue Devils" = devils, 
+             "Bluecoats" = coats,
+             "Phantom Regiment" = phantom,
+             "Blue Knights" = knights,
+             "Carolina Crown" = crown,
+             "All" = all)
     })
+  
+  # Assigns colors to points for each corps when "all" is selected  
 
+    all_colors <- c(
+      "Blue Devils" = "blue",
+      "Bluecoats" = "royalblue",
+      "Phantom Regiment" = "gray63",
+      "Blue Knights" = "deepskyblue",
+      "Carolina Crown" = "goldenrod1"
+    )
+    
+  # Not sure if this is totally necessary, but explicitly assigns colors to each 
+  # corps for when they are selected indivudally.
+   
+    
+  bd_color <- ("Blue Devils" = "blue")  
+  bloo_color <- ("Bluecoats" = "royalblue")
+  phantom_color <- ("Phantom Regiment" = "gray63")
+  knights_color <- ("Blue Knights" = "deepskyblue")
+  crown_color <- ("Carolina Crown" = "goldenrod1")
   
     # Plots a scatter plot with a linear regression. Geom_smooth used with lm to
     # demonstrate trend over time clearly to viewers. Scaled so each year is
@@ -128,7 +139,7 @@ server <- function(input, output) {
     
     output$plot <- renderPlot(    
         ggplot(data = data_input(), aes(x = year, y = diff)) +
-            geom_point(aes(color = corps)) +
+            geom_point(aes_string(color = ifelse(input$corps == "All", "corps", "corps"))) +
             geom_smooth(method = lm,
                         formula = y ~ x,
                         se = FALSE) +
@@ -138,26 +149,42 @@ server <- function(input, output) {
                  x = "Year",
                  y = "Difference Between 
       Average Song Release Date and Current Year",
-                 color = "Corps")
+                 color = "Corps") +
+    
+    # Sets color for points to reflect real (or near) corps color.
+          
+          scale_color_manual(values = if (input$corps == "All") {
+            all_colors
+          } else if (input$corps == "Blue Devils") {
+            bd_color
+          } else if (input$corps == "Bluecoats") {
+            bloo_color
+          } else if (input$corps == "Phantom Regiment") {
+            phantom_color
+          } else if (input$corps == "Blue Knights") {
+            knights_color
+          } else {
+            crown_color
+          })
     )
     
     # Creating another plot output, for the Impact on Placement and Score tab.
     # Currently non-functional - issue with alternating y-variables and I'm 
     # too stubborn to do it any other way.
     
-  #  output$stat_plot <- renderPlot(    
-  #    ggplot(data = data_input(), aes(x = diff, y = input$yvar) +
-  #      geom_point(aes(color = corps)) +
-  #      geom_smooth(method = lm,
-  #                  formula = y ~ x,
-  #                  se = FALSE) +
-  #      theme_classic() +
-  #      labs(title = paste("Relationship Between Modernization and score/placement:", input$corps),
-  #           x = "Difference Between 
-  #    Average Song Release Date and Current Year",
-  #           y = paste(input$yvar))
-  #  )
-  #  )
+    output$stat_plot <- renderPlot(    
+      ggplot(data = corps_input(), aes(x = place, y = diff)) +
+        geom_point(aes(color = corps)) +
+        geom_smooth(method = lm,
+                    formula = y ~ x,
+                    se = FALSE) +
+        theme_classic() +
+        labs(title = paste("Relationship Between Modernization and Placement:", input$corp),
+             x = "Place",
+             y = "Difference Between 
+      Average Song Release Date and Current Year")
+    )
+  
     
     # Creates the ability to interact with the graph via hover. This method 'works'
     # but has flaws - as detailed later.
