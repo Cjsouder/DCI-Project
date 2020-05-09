@@ -9,18 +9,19 @@ library(vembedr)
 library(htmltools)
 library(png)
 
-# Read in csv's with corps 
+# Read in csv's with corps data
 
 devils <- read.csv("bluedevils.csv")
 coats <- read.csv("bluecoats.csv")
 phantom <- read.csv("phantom.csv")
 knights <- read.csv("knights.csv")
 crown <- read.csv("crown.csv")
+vanguard <- read.csv("vanguard.csv")
 all <- read.csv("all_corps.csv")
 
 # Create a list of corps names, for use in a dropdown menu.
 
-corps_names <- c("All","Blue Devils", "Bluecoats", "Phantom Regiment", "Blue Knights", "Carolina Crown")
+corps_names <- c("All","Blue Devils", "Bluecoats", "Phantom Regiment", "Blue Knights", "Carolina Crown", "Santa Clara Vanguard")
 
 # Set UI display
 
@@ -99,6 +100,7 @@ server <- function(input, output) {
                "Phantom Regiment" = phantom,
                "Blue Knights" = knights,
                "Carolina Crown" = crown,
+               "Santa Clara Vanguard" = vanguard,
                "All" = all)
       })
 
@@ -109,6 +111,7 @@ server <- function(input, output) {
              "Phantom Regiment" = phantom,
              "Blue Knights" = knights,
              "Carolina Crown" = crown,
+             "Santa Clara Vanguard" = vanguard,
              "All" = all)
     })
   
@@ -119,11 +122,12 @@ server <- function(input, output) {
       "Bluecoats" = "royalblue",
       "Phantom Regiment" = "gray63",
       "Blue Knights" = "deepskyblue",
-      "Carolina Crown" = "goldenrod1"
+      "Carolina Crown" = "goldenrod1",
+      "Santa Clara Vanguard" = "firebrick3"
     )
     
   # Not sure if this is totally necessary, but explicitly assigns colors to each 
-  # corps for when they are selected indivudally.
+  # corps for when they are selected individually.
    
     
   bd_color <- ("Blue Devils" = "blue")  
@@ -131,6 +135,7 @@ server <- function(input, output) {
   phantom_color <- ("Phantom Regiment" = "gray63")
   knights_color <- ("Blue Knights" = "deepskyblue")
   crown_color <- ("Carolina Crown" = "goldenrod1")
+  vanguard_color <- ("Santa Clara Vanguard" = "firebrick3")
   
     # Plots a scatter plot with a linear regression. Geom_smooth used with lm to
     # demonstrate trend over time clearly to viewers. Scaled so each year is
@@ -163,14 +168,16 @@ server <- function(input, output) {
             phantom_color
           } else if (input$corps == "Blue Knights") {
             knights_color
-          } else {
+          } else if (input$corps == "Carolina Crown"){
             crown_color
+          } else {
+            vanguard_color
           })
     )
     
     # Creating another plot output, for the Impact on Placement and Score tab.
-    # Currently non-functional - issue with alternating y-variables and I'm 
-    # too stubborn to do it any other way.
+    # Can't get the right colors in currently due to error not finding "corp"
+    # object in case if code.
     
     output$stat_plot <- renderPlot(    
       ggplot(data = corps_input(), aes(x = place, y = diff)) +
@@ -179,6 +186,7 @@ server <- function(input, output) {
                     formula = y ~ x,
                     se = FALSE) +
         theme_classic() +
+        scale_x_continuous(n.breaks = 12, limits = c(1, 12)) +
         labs(title = paste("Relationship Between Modernization and Placement:", input$corp),
              x = "Place",
              y = "Difference Between 
@@ -246,11 +254,11 @@ server <- function(input, output) {
           ),
           br(),
           div(
-            "Firstly, there appears to be vast differences in modernization of musical selections among corps. The Blue Devils and Bluecoats, for example, demonstrated nearly opposite trends in their musical modernization. While individual corps may be modernizing musically, the effects on the activity at large will seemingly be more subtle."
+            "Firstly, there does appear to be a general trend towards modernizing musical selections across the drum corps activity. The outlier among the current data set is the Bluecoats, as they are the only group with an positive correlation between modernization and year. This overall trend is expected, but the Bluecoats trend is certainly contrary to expectations - something I will discuss again later."
           ),
           br(),
           div(
-            "Secondly, there is seemingly a miniscule negative correlation between modernization and performance. This coefficient is small enough to be largely negative, and when I compute more data it may change, but it is surprising that this negative correlation exists, as I hypothesized the opposite would be true. My assumption is that this is a function of a few outliers - for example, the Bluecoats 2019 show, which used exclusively Beatles music and scored very highly, placing second."
+            "Secondly, there is seemingly a positive correlation between modernization and placement across the activity - as music becomes more modern, placements seem to increase. This relation again meets up with my initial hypothesis, but upon viewing each corps' data, this may not be as significant as anticipated. There is wide variance from corp to corp, which averages out to be a positive correlation, but only slightly. Perhaps this means that some corps have better adjusted to the modernizing environment, but based upon the Bluecoats data, this seems a flawed conclusion - again, more on that in a minute."
           ),
           br(),
           div(
