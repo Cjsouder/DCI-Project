@@ -23,6 +23,7 @@ bluecoats <- read_excel("./Corps/Bluecoats.xlsx")
 phantom_regiment <- read_excel("./Corps/PhantomRegiment.xlsx")
 blue_knights <- read_excel("./Corps/BlueKnights.xlsx")
 carolina_crown <- read_excel("./Corps/CarolinaCrown.xlsx")
+santa_clara_vanguard <- read_excel("./Corps/SantaClaraVanguard.xlsx")
 ```
 
 
@@ -201,7 +202,23 @@ crown_modern <- carolina_crown %>%
 write.csv(crown_modern, "crown.csv")
 ```
 
+```{r SCV Data, echo = FALSE}
+vanguard_modern <- santa_clara_vanguard %>%
+  mutate(corps = "Santa Clara Vanguard") %>%
+  select(-starts_with("piece_")) %>%
+  mutate(date_1 = as.numeric(date_1)) %>%
+  pivot_longer(cols = starts_with("date_"),
+               names_to = "test",
+               values_to = "date") %>%
+  filter(! is.na(date)) %>%
+  group_by(year) %>%
+  mutate(avg_date = mean(date)) %>%
+  mutate(diff = (year - avg_date)) %>%
+  select(year, place, score, show, corps, avg_date, diff) %>%
+  distinct()
 
+write.csv(vanguard_modern, "vanguard.csv")
+```
 
 ```{r join all, echo = FALSE}
 # Creating a table to combine all the corps repertoire data, as an option
@@ -209,12 +226,13 @@ write.csv(crown_modern, "crown.csv")
 
 all <- full_join(bloo_modern, bd_modern)
 
-
 all <- full_join(all, phantom_modern)
 
 all <- full_join(all, knights_modern)
 
 all <- full_join(all, crown_modern)
+
+all <- full_join(all, vanguard_modern)
 
 write.csv(all, file = "all_corps.csv")
 ```
